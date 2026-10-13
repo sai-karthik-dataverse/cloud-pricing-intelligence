@@ -1,0 +1,42 @@
+{
+	"name": "pl_ingest_azure_retail_prices",
+	"properties": {
+		"activities": [
+			{
+				"name": "set_run_id",
+				"type": "SetVariable",
+				"dependsOn": [],
+				"policy": {
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"variableName": "run_id",
+					"value": {
+						"value": "@concat(formatDateTime(pipeline().TriggerTime,'yyyyMMdd'),'T',formatDateTime(pipeline().TriggerTime,'HHmmss'),'Z')",
+						"type": "Expression"
+					}
+				}
+			}
+		],
+		"parameters": {
+			"regions": {
+				"type": "array",
+				"defaultValue": [
+					"centralindia",
+					"eastus"
+				]
+			},
+			"sku_filter": {
+				"type": "string"
+			}
+		},
+		"variables": {
+			"run_id": {
+				"type": "String"
+			}
+		},
+		"annotations": []
+	}
+}
