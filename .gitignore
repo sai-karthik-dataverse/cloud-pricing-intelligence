@@ -1,3 +1,5 @@
+# Raw API snapshots stay out of Git; they're backed up separately
+landing/
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[codz]
