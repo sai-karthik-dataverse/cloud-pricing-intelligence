@@ -1,0 +1,10 @@
+{
+	"name": "ls_adls_cloudpricing",
+	"properties": {
+		"annotations": [],
+		"type": "AzureBlobFS",
+		"typeProperties": {
+			"url": "https://stcloudpricingsk01.dfs.core.windows.net/"
+		}
+	}
+}
