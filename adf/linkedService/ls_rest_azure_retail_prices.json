@@ -1,0 +1,12 @@
+{
+	"name": "ls_rest_azure_retail_prices",
+	"properties": {
+		"annotations": [],
+		"type": "RestService",
+		"typeProperties": {
+			"url": "https://prices.azure.com/api/retail/prices",
+			"enableServerCertificateValidation": true,
+			"authenticationType": "Anonymous"
+		}
+	}
+}
