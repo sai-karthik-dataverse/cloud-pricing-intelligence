@@ -18,6 +18,92 @@
 						"type": "Expression"
 					}
 				}
+			},
+			{
+				"name": "foreach_region",
+				"type": "ForEach",
+				"dependsOn": [
+					{
+						"activity": "set_run_id",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"items": {
+						"value": "@pipeline().parameters.regions",
+						"type": "Expression"
+					},
+					"isSequential": true,
+					"activities": [
+						{
+							"name": "copy_region_prices",
+							"type": "Copy",
+							"dependsOn": [],
+							"policy": {
+								"timeout": "0.12:00:00",
+								"retry": 2,
+								"retryIntervalInSeconds": 60,
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"source": {
+									"type": "RestSource",
+									"httpRequestTimeout": "00:01:40",
+									"requestInterval": "00.00:00:00.010",
+									"requestMethod": "GET",
+									"paginationRules": {
+										"AbsoluteUrl": {
+											"value": "$.NextPageLink",
+											"type": "Expression"
+										},
+										"": ""
+									}
+								},
+								"sink": {
+									"type": "JsonSink",
+									"storeSettings": {
+										"type": "AzureBlobFSWriteSettings"
+									},
+									"formatSettings": {
+										"type": "JsonWriteSettings",
+										"filePattern": "setOfObjects"
+									}
+								},
+								"enableStaging": false
+							},
+							"inputs": [
+								{
+									"referenceName": "ds_rest_azure_retail_prices",
+									"type": "DatasetReference",
+									"parameters": {
+										"relative_url": {
+											"value": "@concat('?api-version=2023-01-01-preview&currencyCode=%27USD%27&$filter=', uriComponent(concat('serviceName eq ''Virtual Machines'' and armRegionName eq ''', item(), '''', if(empty(pipeline().parameters.sku_filter), '', concat(' and armSkuName eq ''', pipeline().parameters.sku_filter, '''')))))",
+											"type": "Expression"
+										}
+									}
+								}
+							],
+							"outputs": [
+								{
+									"referenceName": "ds_adls_landing_json",
+									"type": "DatasetReference",
+									"parameters": {
+										"folder_path": {
+											"value": "@concat('azure_retail/run_date=', formatDateTime(pipeline().TriggerTime,'yyyy-MM-dd'), '/run_id=', variables('run_id'), '/', item())",
+											"type": "Expression"
+										},
+										"file_name": "prices.json"
+									}
+								}
+							]
+						}
+					]
+				}
 			}
 		],
 		"parameters": {
