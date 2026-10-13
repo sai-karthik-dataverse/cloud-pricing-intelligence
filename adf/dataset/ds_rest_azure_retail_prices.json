@@ -1,0 +1,23 @@
+{
+	"name": "ds_rest_azure_retail_prices",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "ls_rest_azure_retail_prices",
+			"type": "LinkedServiceReference"
+		},
+		"parameters": {
+			"relative_url": {
+				"type": "string"
+			}
+		},
+		"annotations": [],
+		"type": "RestResource",
+		"typeProperties": {
+			"relativeUrl": {
+				"value": "@dataset().relative_url",
+				"type": "Expression"
+			}
+		},
+		"schema": []
+	}
+}
