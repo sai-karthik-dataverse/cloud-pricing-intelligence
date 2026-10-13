@@ -60,8 +60,7 @@
 										"AbsoluteUrl": {
 											"value": "$.NextPageLink",
 											"type": "Expression"
-										},
-										"": ""
+										}
 									}
 								},
 								"sink": {
