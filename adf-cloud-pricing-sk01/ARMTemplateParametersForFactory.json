@@ -1,0 +1,15 @@
+{
+	"$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
+	"contentVersion": "1.0.0.0",
+	"parameters": {
+		"factoryName": {
+			"value": "adf-cloud-pricing-sk01"
+		},
+		"ls_adls_cloudpricing_properties_typeProperties_url": {
+			"value": "https://stcloudpricingsk01.dfs.core.windows.net/"
+		},
+		"ls_rest_azure_retail_prices_properties_typeProperties_url": {
+			"value": "https://prices.azure.com/api/retail/prices"
+		}
+	}
+}
