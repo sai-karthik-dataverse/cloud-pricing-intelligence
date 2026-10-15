@@ -163,8 +163,8 @@
 									"dependsOn": [],
 									"policy": {
 										"timeout": "0.12:00:00",
-										"retry": 2,
-										"retryIntervalInSeconds": 60,
+										"retry": 4,
+										"retryIntervalInSeconds": 120,
 										"secureOutput": false,
 										"secureInput": false
 									},
@@ -173,7 +173,7 @@
 										"source": {
 											"type": "RestSource",
 											"httpRequestTimeout": "00:01:40",
-											"requestInterval": "00.00:00:00.010",
+											"requestInterval": "00.00:00:02.000",
 											"requestMethod": "GET",
 											"paginationRules": {
 												"AbsoluteUrl": {
