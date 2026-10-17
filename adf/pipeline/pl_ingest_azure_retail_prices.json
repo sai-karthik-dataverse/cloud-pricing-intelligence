@@ -44,8 +44,8 @@
 							"dependsOn": [],
 							"policy": {
 								"timeout": "0.12:00:00",
-								"retry": 4,
-								"retryIntervalInSeconds": 120,
+								"retry": 3,
+								"retryIntervalInSeconds": 600,
 								"secureOutput": false,
 								"secureInput": false
 							},
