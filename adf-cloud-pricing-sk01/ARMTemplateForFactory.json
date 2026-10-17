@@ -68,8 +68,8 @@
 									"dependsOn": [],
 									"policy": {
 										"timeout": "0.12:00:00",
-										"retry": 4,
-										"retryIntervalInSeconds": 120,
+										"retry": 3,
+										"retryIntervalInSeconds": 600,
 										"secureOutput": false,
 										"secureInput": false
 									},
@@ -272,7 +272,7 @@
 					"recurrence": {
 						"frequency": "Day",
 						"interval": 1,
-						"startTime": "2026-10-15T06:30:00",
+						"startTime": "2026-10-15T07:07:00",
 						"timeZone": "India Standard Time"
 					}
 				}
