@@ -127,6 +127,33 @@
 								}
 							]
 						}
+					},
+					{
+						"name": "run_daily_price_load",
+						"type": "DatabricksJob",
+						"dependsOn": [
+							{
+								"activity": "foreach_region",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 1,
+							"retryIntervalInSeconds": 300,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"jobId": "270931804839819"
+						},
+						"linkedServiceName": {
+							"referenceName": "ls_databricks_cloudpricing",
+							"type": "LinkedServiceReference"
+						}
 					}
 				],
 				"policy": {
@@ -152,6 +179,7 @@
 				"annotations": []
 			},
 			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/ls_databricks_cloudpricing')]",
 				"[concat(variables('factoryId'), '/datasets/ds_rest_azure_retail_prices')]",
 				"[concat(variables('factoryId'), '/datasets/ds_adls_landing_json')]"
 			]
@@ -232,6 +260,21 @@
 				"type": "AzureBlobFS",
 				"typeProperties": {
 					"url": "[parameters('ls_adls_cloudpricing_properties_typeProperties_url')]"
+				}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/ls_databricks_cloudpricing')]",
+			"type": "Microsoft.DataFactory/factories/linkedServices",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"annotations": [],
+				"type": "AzureDatabricks",
+				"typeProperties": {
+					"domain": "https://adb-7405615991266500.0.azuredatabricks.net",
+					"authentication": "MSI",
+					"workspaceResourceId": "/subscriptions/4f50482a-b170-4e7d-9403-e08fdd5b119f/resourceGroups/rg-cloud-pricing-dev/providers/Microsoft.Databricks/workspaces/dbw-cloud-pricing-dev"
 				}
 			},
 			"dependsOn": []
