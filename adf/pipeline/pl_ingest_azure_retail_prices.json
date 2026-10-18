@@ -103,6 +103,33 @@
 						}
 					]
 				}
+			},
+			{
+				"name": "run_daily_price_load",
+				"type": "DatabricksJob",
+				"dependsOn": [
+					{
+						"activity": "foreach_region",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 1,
+					"retryIntervalInSeconds": 300,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"jobId": "270931804839819"
+				},
+				"linkedServiceName": {
+					"referenceName": "ls_databricks_cloudpricing",
+					"type": "LinkedServiceReference"
+				}
 			}
 		],
 		"parameters": {
