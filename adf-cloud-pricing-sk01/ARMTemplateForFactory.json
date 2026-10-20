@@ -117,7 +117,7 @@
 											"type": "DatasetReference",
 											"parameters": {
 												"folder_path": {
-													"value": "@concat('azure_retail/run_date=', formatDateTime(pipeline().TriggerTime,'yyyy-MM-dd'), '/run_id=', variables('run_id'), '/', item())",
+													"value": "@concat(if(empty(pipeline().parameters.sku_filter), 'azure_retail', 'azure_retail_test'), '/run_date=', formatDateTime(pipeline().TriggerTime,'yyyy-MM-dd'), '/run_id=', variables('run_id'), '/', item())",
 													"type": "Expression"
 												},
 												"file_name": "prices.json"
