@@ -642,6 +642,13 @@
 							"type": "PipelineReference"
 						},
 						"parameters": {}
+					},
+					{
+						"pipelineReference": {
+							"referenceName": "pl_ingest_aws_ec2_prices",
+							"type": "PipelineReference"
+						},
+						"parameters": {}
 					}
 				],
 				"type": "ScheduleTrigger",
@@ -655,7 +662,8 @@
 				}
 			},
 			"dependsOn": [
-				"[concat(variables('factoryId'), '/pipelines/pl_ingest_azure_retail_prices')]"
+				"[concat(variables('factoryId'), '/pipelines/pl_ingest_azure_retail_prices')]",
+				"[concat(variables('factoryId'), '/pipelines/pl_ingest_aws_ec2_prices')]"
 			]
 		}
 	]
