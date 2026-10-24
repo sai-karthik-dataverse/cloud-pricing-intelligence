@@ -1,0 +1,13 @@
+{
+	"name": "ls_rest_azure_management",
+	"properties": {
+		"annotations": [],
+		"type": "RestService",
+		"typeProperties": {
+			"url": "https://management.azure.com/",
+			"enableServerCertificateValidation": true,
+			"authenticationType": "ManagedServiceIdentity",
+			"aadResourceId": "https://management.azure.com/"
+		}
+	}
+}
