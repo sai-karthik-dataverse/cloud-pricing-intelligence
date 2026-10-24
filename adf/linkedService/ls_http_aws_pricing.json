@@ -1,0 +1,12 @@
+{
+	"name": "ls_http_aws_pricing",
+	"properties": {
+		"annotations": [],
+		"type": "HttpServer",
+		"typeProperties": {
+			"url": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonEC2/",
+			"enableServerCertificateValidation": true,
+			"authenticationType": "Anonymous"
+		}
+	}
+}
