@@ -1,0 +1,35 @@
+resources:
+  jobs:
+    daily_price_load:
+      name: daily_price_load
+      tasks:
+        - task_key: bronze
+          notebook_task:
+            notebook_path: notebooks/load_raw_prices
+            source: GIT
+          environment_key: Default
+        - task_key: silver
+          depends_on:
+            - task_key: bronze
+          notebook_task:
+            notebook_path: notebooks/clean_prices
+            source: GIT
+          environment_key: Default
+        - task_key: gold
+          depends_on:
+            - task_key: silver
+          notebook_task:
+            notebook_path: notebooks/build_price_history
+            source: GIT
+          environment_key: Default
+      git_source:
+        git_url: https://github.com/sai-karthik-dataverse/cloud-pricing-intelligence
+        git_provider: gitHub
+        git_branch: main
+      queue:
+        enabled: true
+      environments:
+        - environment_key: Default
+          spec:
+            environment_version: "6"
+      performance_target: STANDARD
