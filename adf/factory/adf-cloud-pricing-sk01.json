@@ -1,0 +1,12 @@
+{
+	"name": "adf-cloud-pricing-sk01",
+	"properties": {
+		"globalParameters": {
+			"subscription_id": {
+				"type": "string",
+				"value": "4f50482a-b170-4e7d-9403-e08fdd5b119f"
+			}
+		}
+	},
+	"location": "centralindia"
+}
