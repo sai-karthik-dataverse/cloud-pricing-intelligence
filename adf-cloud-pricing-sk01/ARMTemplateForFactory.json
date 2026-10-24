@@ -11,6 +11,10 @@
 			"type": "string",
 			"defaultValue": "https://stcloudpricingsk01.dfs.core.windows.net/"
 		},
+		"ls_http_aws_pricing_properties_typeProperties_url": {
+			"type": "string",
+			"defaultValue": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonEC2/"
+		},
 		"ls_rest_azure_retail_prices_properties_typeProperties_url": {
 			"type": "string",
 			"defaultValue": "https://prices.azure.com/api/retail/prices"
@@ -20,6 +24,222 @@
 		"factoryId": "[concat('Microsoft.DataFactory/factories/', parameters('factoryName'))]"
 	},
 	"resources": [
+		{
+			"name": "[concat(parameters('factoryName'), '/pl_ingest_aws_ec2_prices')]",
+			"type": "Microsoft.DataFactory/factories/pipelines",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"activities": [
+					{
+						"name": "get_region_index",
+						"type": "Lookup",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"source": {
+								"type": "JsonSource",
+								"storeSettings": {
+									"type": "HttpReadSettings",
+									"requestMethod": "GET"
+								},
+								"formatSettings": {
+									"type": "JsonReadSettings"
+								}
+							},
+							"dataset": {
+								"referenceName": "ds_http_aws_json",
+								"type": "DatasetReference",
+								"parameters": {
+									"relative_url": "current/region_index.json"
+								}
+							}
+						}
+					},
+					{
+						"name": "set_aws_version",
+						"type": "SetVariable",
+						"dependsOn": [
+							{
+								"activity": "get_region_index",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"variableName": "aws_version",
+							"value": {
+								"value": "@split(activity('get_region_index').output.firstRow.regions['ap-south-1'].currentVersionUrl, '/')[5]",
+								"type": "Expression"
+							}
+						}
+					},
+					{
+						"name": "foreach_aws_region",
+						"type": "ForEach",
+						"dependsOn": [
+							{
+								"activity": "set_aws_version",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"userProperties": [],
+						"typeProperties": {
+							"items": {
+								"value": "@pipeline().parameters.regions",
+								"type": "Expression"
+							},
+							"isSequential": true,
+							"activities": [
+								{
+									"name": "check_already_landed",
+									"type": "GetMetadata",
+									"dependsOn": [],
+									"policy": {
+										"timeout": "0.12:00:00",
+										"retry": 0,
+										"retryIntervalInSeconds": 30,
+										"secureOutput": false,
+										"secureInput": false
+									},
+									"userProperties": [],
+									"typeProperties": {
+										"dataset": {
+											"referenceName": "ds_adls_landing_binary",
+											"type": "DatasetReference",
+											"parameters": {
+												"folder_path": "@concat('aws_ec2/version=', variables('aws_version'), '/', item())",
+												"file_name": "index.csv"
+											}
+										},
+										"fieldList": [
+											"exists"
+										],
+										"storeSettings": {
+											"type": "AzureBlobFSReadSettings",
+											"recursive": true,
+											"enablePartitionDiscovery": false
+										},
+										"formatSettings": {
+											"type": "BinaryReadSettings"
+										}
+									}
+								},
+								{
+									"name": "if_not_landed",
+									"type": "IfCondition",
+									"dependsOn": [
+										{
+											"activity": "check_already_landed",
+											"dependencyConditions": [
+												"Succeeded"
+											]
+										}
+									],
+									"userProperties": [],
+									"typeProperties": {
+										"expression": {
+											"value": "@not(activity('check_already_landed').output.exists)",
+											"type": "Expression"
+										},
+										"ifTrueActivities": [
+											{
+												"name": "copy_aws_region_file",
+												"type": "Copy",
+												"dependsOn": [],
+												"policy": {
+													"timeout": "0.12:00:00",
+													"retry": 3,
+													"retryIntervalInSeconds": 300,
+													"secureOutput": false,
+													"secureInput": false
+												},
+												"userProperties": [],
+												"typeProperties": {
+													"source": {
+														"type": "BinarySource",
+														"storeSettings": {
+															"type": "HttpReadSettings",
+															"requestMethod": "GET"
+														},
+														"formatSettings": {
+															"type": "BinaryReadSettings"
+														}
+													},
+													"sink": {
+														"type": "BinarySink",
+														"storeSettings": {
+															"type": "AzureBlobFSWriteSettings"
+														}
+													},
+													"enableStaging": false
+												},
+												"inputs": [
+													{
+														"referenceName": "ds_http_aws_file",
+														"type": "DatasetReference",
+														"parameters": {
+															"relative_url": "@concat(variables('aws_version'), '/', item(), '/index.csv')"
+														}
+													}
+												],
+												"outputs": [
+													{
+														"referenceName": "ds_adls_landing_binary",
+														"type": "DatasetReference",
+														"parameters": {
+															"folder_path": "@concat('aws_ec2/version=', variables('aws_version'), '/', item())",
+															"file_name": "index.csv"
+														}
+													}
+												]
+											}
+										]
+									}
+								}
+							]
+						}
+					}
+				],
+				"policy": {
+					"elapsedTimeMetric": {}
+				},
+				"parameters": {
+					"regions": {
+						"type": "array",
+						"defaultValue": [
+							"ap-south-1",
+							"us-east-1"
+						]
+					}
+				},
+				"variables": {
+					"aws_version": {
+						"type": "String"
+					}
+				},
+				"annotations": []
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/datasets/ds_http_aws_json')]",
+				"[concat(variables('factoryId'), '/datasets/ds_adls_landing_binary')]",
+				"[concat(variables('factoryId'), '/datasets/ds_http_aws_file')]"
+			]
+		},
 		{
 			"name": "[concat(parameters('factoryName'), '/pl_ingest_azure_retail_prices')]",
 			"type": "Microsoft.DataFactory/factories/pipelines",
@@ -185,6 +405,44 @@
 			]
 		},
 		{
+			"name": "[concat(parameters('factoryName'), '/ds_adls_landing_binary')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "ls_adls_cloudpricing",
+					"type": "LinkedServiceReference"
+				},
+				"parameters": {
+					"folder_path": {
+						"type": "string"
+					},
+					"file_name": {
+						"type": "string"
+					}
+				},
+				"annotations": [],
+				"type": "Binary",
+				"typeProperties": {
+					"location": {
+						"type": "AzureBlobFSLocation",
+						"fileName": {
+							"value": "@dataset().file_name",
+							"type": "Expression"
+						},
+						"folderPath": {
+							"value": "@dataset().folder_path",
+							"type": "Expression"
+						},
+						"fileSystem": "landing"
+					}
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/ls_adls_cloudpricing')]"
+			]
+		},
+		{
 			"name": "[concat(parameters('factoryName'), '/ds_adls_landing_json')]",
 			"type": "Microsoft.DataFactory/factories/datasets",
 			"apiVersion": "2018-06-01",
@@ -221,6 +479,67 @@
 			},
 			"dependsOn": [
 				"[concat(variables('factoryId'), '/linkedServices/ls_adls_cloudpricing')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/ds_http_aws_file')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "ls_http_aws_pricing",
+					"type": "LinkedServiceReference"
+				},
+				"parameters": {
+					"relative_url": {
+						"type": "string"
+					}
+				},
+				"annotations": [],
+				"type": "Binary",
+				"typeProperties": {
+					"location": {
+						"type": "HttpServerLocation",
+						"relativeUrl": {
+							"value": "@dataset().relative_url",
+							"type": "Expression"
+						}
+					}
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/ls_http_aws_pricing')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/ds_http_aws_json')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "ls_http_aws_pricing",
+					"type": "LinkedServiceReference"
+				},
+				"parameters": {
+					"relative_url": {
+						"type": "string"
+					}
+				},
+				"annotations": [],
+				"type": "Json",
+				"typeProperties": {
+					"location": {
+						"type": "HttpServerLocation",
+						"relativeUrl": {
+							"value": "@dataset().relative_url",
+							"type": "Expression"
+						}
+					}
+				},
+				"schema": {}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/ls_http_aws_pricing')]"
 			]
 		},
 		{
@@ -275,6 +594,21 @@
 					"domain": "https://adb-7405615991266500.0.azuredatabricks.net",
 					"authentication": "MSI",
 					"workspaceResourceId": "/subscriptions/4f50482a-b170-4e7d-9403-e08fdd5b119f/resourceGroups/rg-cloud-pricing-dev/providers/Microsoft.Databricks/workspaces/dbw-cloud-pricing-dev"
+				}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/ls_http_aws_pricing')]",
+			"type": "Microsoft.DataFactory/factories/linkedServices",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"annotations": [],
+				"type": "HttpServer",
+				"typeProperties": {
+					"url": "[parameters('ls_http_aws_pricing_properties_typeProperties_url')]",
+					"enableServerCertificateValidation": true,
+					"authenticationType": "Anonymous"
 				}
 			},
 			"dependsOn": []

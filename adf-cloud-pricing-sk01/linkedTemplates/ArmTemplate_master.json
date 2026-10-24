@@ -11,6 +11,10 @@
 			"type": "string",
 			"defaultValue": "https://stcloudpricingsk01.dfs.core.windows.net/"
 		},
+		"ls_http_aws_pricing_properties_typeProperties_url": {
+			"type": "string",
+			"defaultValue": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonEC2/"
+		},
 		"ls_rest_azure_retail_prices_properties_typeProperties_url": {
 			"type": "string",
 			"defaultValue": "https://prices.azure.com/api/retail/prices"
@@ -44,6 +48,9 @@
 					},
 					"ls_adls_cloudpricing_properties_typeProperties_url": {
 						"value": "[parameters('ls_adls_cloudpricing_properties_typeProperties_url')]"
+					},
+					"ls_http_aws_pricing_properties_typeProperties_url": {
+						"value": "[parameters('ls_http_aws_pricing_properties_typeProperties_url')]"
 					},
 					"ls_rest_azure_retail_prices_properties_typeProperties_url": {
 						"value": "[parameters('ls_rest_azure_retail_prices_properties_typeProperties_url')]"
