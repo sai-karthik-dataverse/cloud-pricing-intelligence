@@ -1,0 +1,24 @@
+{
+	"name": "tr_weekly_vm_skus",
+	"properties": {
+		"annotations": [],
+		"runtimeState": "Started",
+		"pipelines": [
+			{
+				"pipelineReference": {
+					"referenceName": "pl_ingest_azure_vm_skus",
+					"type": "PipelineReference"
+				}
+			}
+		],
+		"type": "ScheduleTrigger",
+		"typeProperties": {
+			"recurrence": {
+				"frequency": "Week",
+				"interval": 1,
+				"startTime": "2026-10-26T07:23:00",
+				"timeZone": "India Standard Time"
+			}
+		}
+	}
+}
