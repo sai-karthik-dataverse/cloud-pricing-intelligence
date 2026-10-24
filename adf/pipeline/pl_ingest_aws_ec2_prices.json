@@ -1,0 +1,75 @@
+{
+	"name": "pl_ingest_aws_ec2_prices",
+	"properties": {
+		"activities": [
+			{
+				"name": "get_region_index",
+				"type": "Lookup",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "JsonSource",
+						"storeSettings": {
+							"type": "HttpReadSettings",
+							"requestMethod": "GET"
+						},
+						"formatSettings": {
+							"type": "JsonReadSettings"
+						}
+					},
+					"dataset": {
+						"referenceName": "ds_http_aws_json",
+						"type": "DatasetReference",
+						"parameters": {
+							"relative_url": "current/region_index.json"
+						}
+					}
+				}
+			},
+			{
+				"name": "set_aws_version",
+				"type": "SetVariable",
+				"dependsOn": [
+					{
+						"activity": "get_region_index",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"variableName": "aws_version",
+					"value": "@split(activity('get_region_index').output.firstRow.regions['ap-south-1'].currentVersionUrl, '/')[5]"
+				}
+			}
+		],
+		"parameters": {
+			"regions": {
+				"type": "array",
+				"defaultValue": [
+					"ap-south-1",
+					"us-east-1"
+				]
+			}
+		},
+		"variables": {
+			"aws_version": {
+				"type": "String"
+			}
+		},
+		"annotations": []
+	}
+}
