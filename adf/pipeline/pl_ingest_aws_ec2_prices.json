@@ -54,6 +54,133 @@
 					"variableName": "aws_version",
 					"value": "@split(activity('get_region_index').output.firstRow.regions['ap-south-1'].currentVersionUrl, '/')[5]"
 				}
+			},
+			{
+				"name": "foreach_aws_region",
+				"type": "ForEach",
+				"dependsOn": [
+					{
+						"activity": "set_aws_version",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"items": {
+						"value": "@pipeline().parameters.regions",
+						"type": "Expression"
+					},
+					"isSequential": true,
+					"activities": [
+						{
+							"name": "check_already_landed",
+							"type": "GetMetadata",
+							"dependsOn": [],
+							"policy": {
+								"timeout": "0.12:00:00",
+								"retry": 0,
+								"retryIntervalInSeconds": 30,
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"dataset": {
+									"referenceName": "ds_adls_landing_binary",
+									"type": "DatasetReference",
+									"parameters": {
+										"folder_path": "@concat('aws_ec2/version=', variables('aws_version'), '/', item())",
+										"file_name": "index.csv"
+									}
+								},
+								"fieldList": [
+									"exists"
+								],
+								"storeSettings": {
+									"type": "AzureBlobFSReadSettings",
+									"enablePartitionDiscovery": false
+								},
+								"formatSettings": {
+									"type": "BinaryReadSettings"
+								}
+							}
+						},
+						{
+							"name": "if_not_landed",
+							"type": "IfCondition",
+							"dependsOn": [
+								{
+									"activity": "check_already_landed",
+									"dependencyConditions": [
+										"Succeeded"
+									]
+								}
+							],
+							"userProperties": [],
+							"typeProperties": {
+								"expression": {
+									"value": "@not(activity('check_already_landed').output.exists)",
+									"type": "Expression"
+								},
+								"ifTrueActivities": [
+									{
+										"name": "copy_aws_region_file",
+										"type": "Copy",
+										"dependsOn": [],
+										"policy": {
+											"timeout": "0.12:00:00",
+											"retry": 3,
+											"retryIntervalInSeconds": 300,
+											"secureOutput": false,
+											"secureInput": false
+										},
+										"userProperties": [],
+										"typeProperties": {
+											"source": {
+												"type": "BinarySource",
+												"storeSettings": {
+													"type": "HttpReadSettings",
+													"requestMethod": "GET"
+												},
+												"formatSettings": {
+													"type": "BinaryReadSettings"
+												}
+											},
+											"sink": {
+												"type": "BinarySink",
+												"storeSettings": {
+													"type": "AzureBlobFSWriteSettings"
+												}
+											},
+											"enableStaging": false
+										},
+										"inputs": [
+											{
+												"referenceName": "ds_http_aws_file",
+												"type": "DatasetReference",
+												"parameters": {
+													"relative_url": "@concat(variables('aws_version'), '/', item(), '/index.csv')"
+												}
+											}
+										],
+										"outputs": [
+											{
+												"referenceName": "ds_adls_landing_binary",
+												"type": "DatasetReference",
+												"parameters": {
+													"folder_path": "@concat('aws_ec2/version=', variables('aws_version'), '/', item())",
+													"file_name": "index.csv"
+												}
+											}
+										]
+									}
+								]
+							}
+						}
+					]
+				}
 			}
 		],
 		"parameters": {
