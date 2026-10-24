@@ -1,0 +1,25 @@
+{
+	"name": "ds_http_aws_file",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "ls_http_aws_pricing",
+			"type": "LinkedServiceReference"
+		},
+		"parameters": {
+			"relative_url": {
+				"type": "string"
+			}
+		},
+		"annotations": [],
+		"type": "Binary",
+		"typeProperties": {
+			"location": {
+				"type": "HttpServerLocation",
+				"relativeUrl": {
+					"value": "@dataset().relative_url",
+					"type": "Expression"
+				}
+			}
+		}
+	}
+}
