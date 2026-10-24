@@ -1,0 +1,20 @@
+{
+	"name": "ds_rest_azure_management",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "ls_rest_azure_management",
+			"type": "LinkedServiceReference"
+		},
+		"parameters": {
+			"relative_url": {
+				"type": "string"
+			}
+		},
+		"annotations": [],
+		"type": "RestResource",
+		"typeProperties": {
+			"relativeUrl": "@dataset().relative_url"
+		},
+		"schema": []
+	}
+}

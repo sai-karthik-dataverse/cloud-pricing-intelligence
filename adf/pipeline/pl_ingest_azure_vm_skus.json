@@ -1,0 +1,92 @@
+{
+	"name": "pl_ingest_azure_vm_skus",
+	"properties": {
+		"activities": [
+			{
+				"name": "foreach_sku_region",
+				"type": "ForEach",
+				"dependsOn": [],
+				"userProperties": [],
+				"typeProperties": {
+					"items": {
+						"value": "@pipeline().parameters.regions",
+						"type": "Expression"
+					},
+					"isSequential": true,
+					"activities": [
+						{
+							"name": "copy_vm_skus",
+							"type": "Copy",
+							"dependsOn": [],
+							"policy": {
+								"timeout": "0.12:00:00",
+								"retry": 0,
+								"retryIntervalInSeconds": 30,
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"source": {
+									"type": "RestSource",
+									"httpRequestTimeout": "00:01:40",
+									"requestInterval": "00.00:00:00.010",
+									"requestMethod": "GET",
+									"paginationRules": {
+										"AbsoluteUrl": "$.$.nextLink"
+									}
+								},
+								"sink": {
+									"type": "JsonSink",
+									"storeSettings": {
+										"type": "AzureBlobFSWriteSettings"
+									},
+									"formatSettings": {
+										"type": "JsonWriteSettings",
+										"filePattern": "setOfObjects"
+									}
+								},
+								"enableStaging": false
+							},
+							"inputs": [
+								{
+									"referenceName": "ds_rest_azure_management",
+									"type": "DatasetReference",
+									"parameters": {
+										"relative_url": {
+											"value": "@concat('subscriptions/', pipeline().globalParameters.subscription_id, '/providers/Microsoft.Compute/skus?api-version=2021-07-01&$filter=', uriComponent(concat('location eq ''', item(), '''')))",
+											"type": "Expression"
+										}
+									}
+								}
+							],
+							"outputs": [
+								{
+									"referenceName": "ds_adls_landing_json",
+									"type": "DatasetReference",
+									"parameters": {
+										"folder_path": {
+											"value": "@concat('azure_vm_skus/run_date=', formatDateTime(utcNow(), 'yyyy-MM-dd'), '/', item())",
+											"type": "Expression"
+										},
+										"file_name": "skus.json"
+									}
+								}
+							]
+						}
+					]
+				}
+			}
+		],
+		"parameters": {
+			"regions": {
+				"type": "array",
+				"defaultValue": [
+					"centralindia",
+					"eastus"
+				]
+			}
+		},
+		"annotations": []
+	}
+}
