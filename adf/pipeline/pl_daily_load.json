@@ -15,7 +15,10 @@
 						"referenceName": "pl_ingest_azure_retail_prices",
 						"type": "PipelineReference"
 					},
-					"waitOnCompletion": true
+					"waitOnCompletion": true,
+					"parameters": {
+						"regions": "@createArray('centralindia', 'eastus')"
+					}
 				}
 			},
 			{
@@ -31,7 +34,10 @@
 						"referenceName": "pl_ingest_aws_ec2_prices",
 						"type": "PipelineReference"
 					},
-					"waitOnCompletion": true
+					"waitOnCompletion": true,
+					"parameters": {
+						"regions": "@createArray('ap-south-1', 'us-east-1')"
+					}
 				}
 			},
 			{
