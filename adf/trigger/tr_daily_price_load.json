@@ -1,18 +1,12 @@
 {
-	"name": "tr_daily_azure_retail_prices",
+	"name": "tr_daily_price_load",
 	"properties": {
 		"annotations": [],
 		"runtimeState": "Started",
 		"pipelines": [
 			{
 				"pipelineReference": {
-					"referenceName": "pl_ingest_azure_retail_prices",
-					"type": "PipelineReference"
-				}
-			},
-			{
-				"pipelineReference": {
-					"referenceName": "pl_ingest_aws_ec2_prices",
+					"referenceName": "pl_daily_load",
 					"type": "PipelineReference"
 				}
 			}
@@ -22,7 +16,7 @@
 			"recurrence": {
 				"frequency": "Day",
 				"interval": 1,
-				"startTime": "2026-10-15T07:07:00",
+				"startTime": "2026-10-26T07:07:00",
 				"timeZone": "India Standard Time"
 			}
 		}
