@@ -92,16 +92,22 @@
 			"dependsOn": []
 		},
 		{
-			"name": "[concat(parameters('factoryName'), '/ls_rest_azure_retail_prices')]",
-			"type": "Microsoft.DataFactory/factories/linkedServices",
+			"name": "[concat(parameters('factoryName'), '/ir-southindia')]",
+			"type": "Microsoft.DataFactory/factories/integrationRuntimes",
 			"apiVersion": "2018-06-01",
 			"properties": {
-				"annotations": [],
-				"type": "RestService",
+				"type": "Managed",
 				"typeProperties": {
-					"url": "[parameters('ls_rest_azure_retail_prices_properties_typeProperties_url')]",
-					"enableServerCertificateValidation": true,
-					"authenticationType": "Anonymous"
+					"computeProperties": {
+						"location": "South India",
+						"dataFlowProperties": {
+							"computeType": "General",
+							"coreCount": 8,
+							"timeToLive": 10,
+							"cleanup": false,
+							"customProperties": []
+						}
+					}
 				}
 			},
 			"dependsOn": []
@@ -273,31 +279,24 @@
 			]
 		},
 		{
-			"name": "[concat(parameters('factoryName'), '/ds_rest_azure_retail_prices')]",
-			"type": "Microsoft.DataFactory/factories/datasets",
+			"name": "[concat(parameters('factoryName'), '/ls_rest_azure_retail_prices')]",
+			"type": "Microsoft.DataFactory/factories/linkedServices",
 			"apiVersion": "2018-06-01",
 			"properties": {
-				"linkedServiceName": {
-					"referenceName": "ls_rest_azure_retail_prices",
-					"type": "LinkedServiceReference"
-				},
-				"parameters": {
-					"relative_url": {
-						"type": "string"
-					}
-				},
 				"annotations": [],
-				"type": "RestResource",
+				"type": "RestService",
 				"typeProperties": {
-					"relativeUrl": {
-						"value": "@dataset().relative_url",
-						"type": "Expression"
-					}
+					"url": "[parameters('ls_rest_azure_retail_prices_properties_typeProperties_url')]",
+					"enableServerCertificateValidation": true,
+					"authenticationType": "Anonymous"
 				},
-				"schema": []
+				"connectVia": {
+					"referenceName": "ir-southindia",
+					"type": "IntegrationRuntimeReference"
+				}
 			},
 			"dependsOn": [
-				"[concat(variables('factoryId'), '/linkedServices/ls_rest_azure_retail_prices')]"
+				"[concat(variables('factoryId'), '/integrationRuntimes/ir-southindia')]"
 			]
 		},
 		{
@@ -517,6 +516,135 @@
 			]
 		},
 		{
+			"name": "[concat(parameters('factoryName'), '/pl_ingest_azure_vm_skus')]",
+			"type": "Microsoft.DataFactory/factories/pipelines",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"activities": [
+					{
+						"name": "foreach_sku_region",
+						"type": "ForEach",
+						"dependsOn": [],
+						"userProperties": [],
+						"typeProperties": {
+							"items": {
+								"value": "@pipeline().parameters.regions",
+								"type": "Expression"
+							},
+							"isSequential": true,
+							"activities": [
+								{
+									"name": "copy_vm_skus",
+									"type": "Copy",
+									"dependsOn": [],
+									"policy": {
+										"timeout": "0.12:00:00",
+										"retry": 0,
+										"retryIntervalInSeconds": 30,
+										"secureOutput": false,
+										"secureInput": false
+									},
+									"userProperties": [],
+									"typeProperties": {
+										"source": {
+											"type": "RestSource",
+											"httpRequestTimeout": "00:01:40",
+											"requestInterval": "00.00:00:00.010",
+											"requestMethod": "GET",
+											"paginationRules": {
+												"AbsoluteUrl": "$.$.nextLink"
+											}
+										},
+										"sink": {
+											"type": "JsonSink",
+											"storeSettings": {
+												"type": "AzureBlobFSWriteSettings"
+											},
+											"formatSettings": {
+												"type": "JsonWriteSettings",
+												"filePattern": "setOfObjects"
+											}
+										},
+										"enableStaging": false
+									},
+									"inputs": [
+										{
+											"referenceName": "ds_rest_azure_management",
+											"type": "DatasetReference",
+											"parameters": {
+												"relative_url": {
+													"value": "@concat('subscriptions/', pipeline().globalParameters.subscription_id, '/providers/Microsoft.Compute/skus?api-version=2021-07-01&$filter=', uriComponent(concat('location eq ''', item(), '''')))",
+													"type": "Expression"
+												}
+											}
+										}
+									],
+									"outputs": [
+										{
+											"referenceName": "ds_adls_landing_json",
+											"type": "DatasetReference",
+											"parameters": {
+												"folder_path": {
+													"value": "@concat('azure_vm_skus/run_date=', formatDateTime(utcNow(), 'yyyy-MM-dd'), '/', item())",
+													"type": "Expression"
+												},
+												"file_name": "skus.json"
+											}
+										}
+									]
+								}
+							]
+						}
+					}
+				],
+				"policy": {
+					"elapsedTimeMetric": {}
+				},
+				"parameters": {
+					"regions": {
+						"type": "array",
+						"defaultValue": [
+							"centralindia",
+							"eastus"
+						]
+					}
+				},
+				"annotations": []
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/datasets/ds_rest_azure_management')]",
+				"[concat(variables('factoryId'), '/datasets/ds_adls_landing_json')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/ds_rest_azure_retail_prices')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "ls_rest_azure_retail_prices",
+					"type": "LinkedServiceReference"
+				},
+				"parameters": {
+					"relative_url": {
+						"type": "string"
+					}
+				},
+				"annotations": [],
+				"type": "RestResource",
+				"typeProperties": {
+					"relativeUrl": {
+						"value": "@dataset().relative_url",
+						"type": "Expression"
+					}
+				},
+				"schema": []
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/ls_rest_azure_retail_prices')]"
+			]
+		},
+		{
 			"name": "[concat(parameters('factoryName'), '/pl_ingest_azure_retail_prices')]",
 			"type": "Microsoft.DataFactory/factories/pipelines",
 			"apiVersion": "2018-06-01",
@@ -623,33 +751,6 @@
 								}
 							]
 						}
-					},
-					{
-						"name": "run_daily_price_load",
-						"type": "DatabricksJob",
-						"dependsOn": [
-							{
-								"activity": "foreach_region",
-								"dependencyConditions": [
-									"Succeeded"
-								]
-							}
-						],
-						"policy": {
-							"timeout": "0.12:00:00",
-							"retry": 1,
-							"retryIntervalInSeconds": 300,
-							"secureOutput": false,
-							"secureInput": false
-						},
-						"userProperties": [],
-						"typeProperties": {
-							"jobId": "270931804839819"
-						},
-						"linkedServiceName": {
-							"referenceName": "ls_databricks_cloudpricing",
-							"type": "LinkedServiceReference"
-						}
 					}
 				],
 				"policy": {
@@ -675,110 +776,138 @@
 				"annotations": []
 			},
 			"dependsOn": [
-				"[concat(variables('factoryId'), '/linkedServices/ls_databricks_cloudpricing')]",
 				"[concat(variables('factoryId'), '/datasets/ds_rest_azure_retail_prices')]",
 				"[concat(variables('factoryId'), '/datasets/ds_adls_landing_json')]"
 			]
 		},
 		{
-			"name": "[concat(parameters('factoryName'), '/pl_ingest_azure_vm_skus')]",
+			"name": "[concat(parameters('factoryName'), '/tr_weekly_vm_skus')]",
+			"type": "Microsoft.DataFactory/factories/triggers",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"annotations": [],
+				"runtimeState": "Started",
+				"pipelines": [
+					{
+						"pipelineReference": {
+							"referenceName": "pl_ingest_azure_vm_skus",
+							"type": "PipelineReference"
+						},
+						"parameters": {}
+					}
+				],
+				"type": "ScheduleTrigger",
+				"typeProperties": {
+					"recurrence": {
+						"frequency": "Week",
+						"interval": 1,
+						"startTime": "2026-10-26T07:23:00",
+						"timeZone": "India Standard Time",
+						"schedule": {
+							"weekDays": [
+								"Monday"
+							]
+						}
+					}
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/pipelines/pl_ingest_azure_vm_skus')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/pl_daily_load')]",
 			"type": "Microsoft.DataFactory/factories/pipelines",
 			"apiVersion": "2018-06-01",
 			"properties": {
 				"activities": [
 					{
-						"name": "foreach_sku_region",
-						"type": "ForEach",
+						"name": "run_azure_ingest",
+						"type": "ExecutePipeline",
 						"dependsOn": [],
+						"policy": {
+							"secureInput": false
+						},
 						"userProperties": [],
 						"typeProperties": {
-							"items": {
-								"value": "@pipeline().parameters.regions",
-								"type": "Expression"
+							"pipeline": {
+								"referenceName": "pl_ingest_azure_retail_prices",
+								"type": "PipelineReference"
 							},
-							"isSequential": true,
-							"activities": [
-								{
-									"name": "copy_vm_skus",
-									"type": "Copy",
-									"dependsOn": [],
-									"policy": {
-										"timeout": "0.12:00:00",
-										"retry": 0,
-										"retryIntervalInSeconds": 30,
-										"secureOutput": false,
-										"secureInput": false
-									},
-									"userProperties": [],
-									"typeProperties": {
-										"source": {
-											"type": "RestSource",
-											"httpRequestTimeout": "00:01:40",
-											"requestInterval": "00.00:00:00.010",
-											"requestMethod": "GET",
-											"paginationRules": {
-												"AbsoluteUrl": "$.$.nextLink"
-											}
-										},
-										"sink": {
-											"type": "JsonSink",
-											"storeSettings": {
-												"type": "AzureBlobFSWriteSettings"
-											},
-											"formatSettings": {
-												"type": "JsonWriteSettings",
-												"filePattern": "setOfObjects"
-											}
-										},
-										"enableStaging": false
-									},
-									"inputs": [
-										{
-											"referenceName": "ds_rest_azure_management",
-											"type": "DatasetReference",
-											"parameters": {
-												"relative_url": {
-													"value": "@concat('subscriptions/', pipeline().globalParameters.subscription_id, '/providers/Microsoft.Compute/skus?api-version=2021-07-01&$filter=', uriComponent(concat('location eq ''', item(), '''')))",
-													"type": "Expression"
-												}
-											}
-										}
-									],
-									"outputs": [
-										{
-											"referenceName": "ds_adls_landing_json",
-											"type": "DatasetReference",
-											"parameters": {
-												"folder_path": {
-													"value": "@concat('azure_vm_skus/run_date=', formatDateTime(utcNow(), 'yyyy-MM-dd'), '/', item())",
-													"type": "Expression"
-												},
-												"file_name": "skus.json"
-											}
-										}
-									]
+							"waitOnCompletion": true,
+							"parameters": {
+								"regions": {
+									"value": "@createArray('centralindia', 'eastus')",
+									"type": "Expression"
 								}
-							]
+							}
+						}
+					},
+					{
+						"name": "run_aws_ingest",
+						"type": "ExecutePipeline",
+						"dependsOn": [],
+						"policy": {
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"pipeline": {
+								"referenceName": "pl_ingest_aws_ec2_prices",
+								"type": "PipelineReference"
+							},
+							"waitOnCompletion": true,
+							"parameters": {
+								"regions": {
+									"value": "@createArray('ap-south-1', 'us-east-1')",
+									"type": "Expression"
+								}
+							}
+						}
+					},
+					{
+						"name": "run_daily_price_load",
+						"type": "DatabricksJob",
+						"dependsOn": [
+							{
+								"activity": "run_azure_ingest",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							},
+							{
+								"activity": "run_aws_ingest",
+								"dependencyConditions": [
+									"Completed"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 1,
+							"retryIntervalInSeconds": 300,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"jobId": "270931804839819"
+						},
+						"linkedServiceName": {
+							"referenceName": "ls_databricks_cloudpricing",
+							"type": "LinkedServiceReference"
 						}
 					}
 				],
 				"policy": {
 					"elapsedTimeMetric": {}
 				},
-				"parameters": {
-					"regions": {
-						"type": "array",
-						"defaultValue": [
-							"centralindia",
-							"eastus"
-						]
-					}
-				},
 				"annotations": []
 			},
 			"dependsOn": [
-				"[concat(variables('factoryId'), '/datasets/ds_rest_azure_management')]",
-				"[concat(variables('factoryId'), '/datasets/ds_adls_landing_json')]"
+				"[concat(variables('factoryId'), '/pipelines/pl_ingest_azure_retail_prices')]",
+				"[concat(variables('factoryId'), '/pipelines/pl_ingest_aws_ec2_prices')]",
+				"[concat(variables('factoryId'), '/linkedServices/ls_databricks_cloudpricing')]"
 			]
 		},
 		{
@@ -817,41 +946,6 @@
 			"dependsOn": [
 				"[concat(variables('factoryId'), '/pipelines/pl_ingest_azure_retail_prices')]",
 				"[concat(variables('factoryId'), '/pipelines/pl_ingest_aws_ec2_prices')]"
-			]
-		},
-		{
-			"name": "[concat(parameters('factoryName'), '/tr_weekly_vm_skus')]",
-			"type": "Microsoft.DataFactory/factories/triggers",
-			"apiVersion": "2018-06-01",
-			"properties": {
-				"annotations": [],
-				"runtimeState": "Started",
-				"pipelines": [
-					{
-						"pipelineReference": {
-							"referenceName": "pl_ingest_azure_vm_skus",
-							"type": "PipelineReference"
-						},
-						"parameters": {}
-					}
-				],
-				"type": "ScheduleTrigger",
-				"typeProperties": {
-					"recurrence": {
-						"frequency": "Week",
-						"interval": 1,
-						"startTime": "2026-10-26T07:23:00",
-						"timeZone": "India Standard Time",
-						"schedule": {
-							"weekDays": [
-								"Monday"
-							]
-						}
-					}
-				}
-			},
-			"dependsOn": [
-				"[concat(variables('factoryId'), '/pipelines/pl_ingest_azure_vm_skus')]"
 			]
 		}
 	]
