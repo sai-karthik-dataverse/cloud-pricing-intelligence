@@ -3,6 +3,18 @@ resources:
     daily_price_load:
       name: daily_price_load
       tasks:
+        - task_key: aws_bronze
+          notebook_task:
+            notebook_path: notebooks/load_aws_prices
+            source: GIT
+          environment_key: Default
+        - task_key: aws_silver
+          depends_on:
+            - task_key: aws_bronze
+          notebook_task:
+            notebook_path: notebooks/clean_aws_prices
+            source: GIT
+          environment_key: Default
         - task_key: bronze
           notebook_task:
             notebook_path: notebooks/load_raw_prices
@@ -20,6 +32,20 @@ resources:
             - task_key: silver
           notebook_task:
             notebook_path: notebooks/build_price_history
+            source: GIT
+          environment_key: Default
+        - task_key: vm_specs
+          notebook_task:
+            notebook_path: notebooks/load_vm_specs
+            source: GIT
+          environment_key: Default
+        - task_key: cross_cloud
+          depends_on:
+            - task_key: gold
+            - task_key: aws_silver
+            - task_key: vm_specs
+          notebook_task:
+            notebook_path: notebooks/build_cross_cloud
             source: GIT
           environment_key: Default
       git_source:
