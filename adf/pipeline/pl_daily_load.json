@@ -1,0 +1,79 @@
+{
+	"name": "pl_daily_load",
+	"properties": {
+		"activities": [
+			{
+				"name": "run_azure_ingest",
+				"type": "ExecutePipeline",
+				"dependsOn": [],
+				"policy": {
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"pipeline": {
+						"referenceName": "pl_ingest_azure_retail_prices",
+						"type": "PipelineReference"
+					},
+					"waitOnCompletion": true,
+					"parameters": {
+						"regions": "@createArray('centralindia', 'eastus')"
+					}
+				}
+			},
+			{
+				"name": "run_aws_ingest",
+				"type": "ExecutePipeline",
+				"dependsOn": [],
+				"policy": {
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"pipeline": {
+						"referenceName": "pl_ingest_aws_ec2_prices",
+						"type": "PipelineReference"
+					},
+					"waitOnCompletion": true,
+					"parameters": {
+						"regions": "@createArray('ap-south-1', 'us-east-1')"
+					}
+				}
+			},
+			{
+				"name": "run_daily_price_load",
+				"type": "DatabricksJob",
+				"dependsOn": [
+					{
+						"activity": "run_azure_ingest",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					},
+					{
+						"activity": "run_aws_ingest",
+						"dependencyConditions": [
+							"Completed"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 1,
+					"retryIntervalInSeconds": 300,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"jobId": "270931804839819"
+				},
+				"linkedServiceName": {
+					"referenceName": "ls_databricks_cloudpricing",
+					"type": "LinkedServiceReference"
+				}
+			}
+		],
+		"annotations": []
+	}
+}
