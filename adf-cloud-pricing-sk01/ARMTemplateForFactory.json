@@ -855,7 +855,7 @@
 			]
 		},
 		{
-			"name": "[concat(parameters('factoryName'), '/tr_daily_azure_retail_prices')]",
+			"name": "[concat(parameters('factoryName'), '/tr_daily_price_load')]",
 			"type": "Microsoft.DataFactory/factories/triggers",
 			"apiVersion": "2018-06-01",
 			"properties": {
@@ -864,14 +864,7 @@
 				"pipelines": [
 					{
 						"pipelineReference": {
-							"referenceName": "pl_ingest_azure_retail_prices",
-							"type": "PipelineReference"
-						},
-						"parameters": {}
-					},
-					{
-						"pipelineReference": {
-							"referenceName": "pl_ingest_aws_ec2_prices",
+							"referenceName": "pl_daily_load",
 							"type": "PipelineReference"
 						},
 						"parameters": {}
@@ -882,14 +875,13 @@
 					"recurrence": {
 						"frequency": "Day",
 						"interval": 1,
-						"startTime": "2026-10-15T07:07:00",
+						"startTime": "2026-10-26T07:07:00",
 						"timeZone": "India Standard Time"
 					}
 				}
 			},
 			"dependsOn": [
-				"[concat(variables('factoryId'), '/pipelines/pl_ingest_azure_retail_prices')]",
-				"[concat(variables('factoryId'), '/pipelines/pl_ingest_aws_ec2_prices')]"
+				"[concat(variables('factoryId'), '/pipelines/pl_daily_load')]"
 			]
 		},
 		{
