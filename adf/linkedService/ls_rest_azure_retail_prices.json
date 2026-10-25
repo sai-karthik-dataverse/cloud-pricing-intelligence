@@ -7,6 +7,10 @@
 			"url": "https://prices.azure.com/api/retail/prices",
 			"enableServerCertificateValidation": true,
 			"authenticationType": "Anonymous"
+		},
+		"connectVia": {
+			"referenceName": "ir-southindia",
+			"type": "IntegrationRuntimeReference"
 		}
 	}
 }
