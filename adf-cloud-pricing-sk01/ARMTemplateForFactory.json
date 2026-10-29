@@ -85,6 +85,8 @@
 					{
 						"name": "run_daily_price_load",
 						"type": "DatabricksJob",
+						"state": "Inactive",
+						"onInactiveMarkAs": "Succeeded",
 						"dependsOn": [
 							{
 								"activity": "run_azure_ingest",
