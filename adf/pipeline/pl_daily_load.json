@@ -17,7 +17,10 @@
 					},
 					"waitOnCompletion": true,
 					"parameters": {
-						"regions": "@createArray('centralindia', 'eastus')"
+						"regions": {
+							"value": "@createArray('centralindia', 'eastus')",
+							"type": "Expression"
+						}
 					}
 				}
 			},
@@ -36,13 +39,18 @@
 					},
 					"waitOnCompletion": true,
 					"parameters": {
-						"regions": "@createArray('ap-south-1', 'us-east-1')"
+						"regions": {
+							"value": "@createArray('ap-south-1', 'us-east-1')",
+							"type": "Expression"
+						}
 					}
 				}
 			},
 			{
 				"name": "run_daily_price_load",
 				"type": "DatabricksJob",
+				"state": "Inactive",
+				"onInactiveMarkAs": "Succeeded",
 				"dependsOn": [
 					{
 						"activity": "run_azure_ingest",
